@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"sort"
 	"strconv"
 	"time"
@@ -99,7 +98,7 @@ func buildSecurityGroupMapping(ec2Client *ec2.EC2, versions []*ec2.LaunchTemplat
 
 	groups, err := awsutil.FetchSecurityGroups(ec2Client, groupIDs)
 	if err != nil {
-		util.Fatal(AWSAPIError, err)
+		util.Fatal(1, err)
 	}
 
 	for _, group := range groups {
@@ -121,7 +120,7 @@ func buildImageMapping(ec2Client *ec2.EC2) map[string]string {
 		Owners:            []*string{aws.String("self")},
 	})
 	if err != nil {
-		util.Fatal(AWSAPIError, err)
+		util.Fatal(1, err)
 	}
 
 	for _, image := range images.Images {
@@ -141,20 +140,12 @@ func buildImageMapping(ec2Client *ec2.EC2) map[string]string {
 	return imageMap
 }
 
-const NoSuchTemplate = 103
-
 // nolint: gochecknoglobals
 var launchTemplateCmd = &cobra.Command{
 	Use:   "template account template-name",
 	Short: "Show details about a launch template.",
-	Long: fmt.Sprintf(`
-Show details about a launch template.
-
-Errors:
-
-%3d - The specified launch template was not found.`,
-		NoSuchTemplate),
-	Args: cobra.ExactArgs(2),
+	Long:  "",
+	Args:  cobra.ExactArgs(2),
 	Run: func(_ *cobra.Command, args []string) {
 		accountName := args[0]
 		templateName := args[1]
@@ -169,11 +160,11 @@ Errors:
 
 		versions, err := awsutil.FetchLaunchTemplateVersions(deployAcctEC2Client, templateName, nil)
 		if err != nil {
-			util.Fatal(AWSAPIError, err)
+			util.Fatal(1, err)
 		}
 
 		if len(versions) == 0 {
-			util.Fatalf(NoSuchTemplate, "No launch template versions found.\n")
+			util.Fatalf(1, "No launch template versions found.\n")
 		}
 
 		groupMap := buildSecurityGroupMapping(deployAcctEC2Client, versions)

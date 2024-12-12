@@ -14,10 +14,6 @@ import (
 )
 
 const (
-	CouldntLaunchInstance     = 100
-	NoMatchingLaunchTemplates = 101
-	MultipleLaunchTemplates   = 102
-
 	LaunchWaitTimeout = 30
 )
 
@@ -25,21 +21,10 @@ const (
 var launchCmd = &cobra.Command{
 	Use:   "launch account template-name keypair-name [subnet-id]",
 	Short: "Launch an EC2 instance from a launch template.",
-	Long: fmt.Sprintf(`Launch an EC2 instance from a launch template.
+	Long: `Launch an EC2 instance from a launch template.
 
 If you don't specify a subnet-id, the default subnet from the launch template
-will be used.
-
-Errors:
-
-%3d - EC2 didn't return an error, but didn't return information about a newly
-      launched instance.  You may need to check the AWS console to see if an
-      instance was actually launched.
-%3d - No launch templates matching the name prefix provided were found.
-%3d - More than one launch template matching the name prefix provided was found.`,
-		CouldntLaunchInstance,
-		NoMatchingLaunchTemplates,
-		MultipleLaunchTemplates),
+will be used.`,
 	Args: cobra.RangeArgs(3, 4), // nolint: mnd
 	Run: func(_ *cobra.Command, args []string) {
 		accountName := args[0]
@@ -68,7 +53,7 @@ Errors:
 
 		templates, err := awsutil.FetchLaunchTemplates(ec2Client, nil)
 		if err != nil {
-			util.Fatal(AWSAPIError, err)
+			util.Fatal(1, err)
 		}
 		candidates := make([]string, 0)
 		for _, template := range templates {
@@ -83,13 +68,13 @@ Errors:
 			for _, template := range templates {
 				fmt.Printf("\t%s\n", aws.StringValue(template.LaunchTemplateName))
 			}
-			util.Fatalf(NoMatchingLaunchTemplates, "No matching launch templates found.\n")
+			util.Fatalf(1, "No matching launch templates found.\n")
 		} else if len(candidates) > 1 {
 			fmt.Printf("Found the following launch templates matching specified prefix:\n")
 			for _, candidate := range candidates {
 				fmt.Printf("\t%s\n", candidate)
 			}
-			util.Fatalf(MultipleLaunchTemplates, "Multiple launch templates found.\n")
+			util.Fatalf(1, "Multiple launch templates found.\n")
 		}
 		name := candidates[0]
 		fmt.Printf("Using launch template %s...\n", name)
@@ -120,11 +105,11 @@ Errors:
 
 		resp, err := ec2Client.RunInstances(&input)
 		if err != nil {
-			util.Fatal(AWSAPIError, err)
+			util.Fatal(1, err)
 		}
 
 		if len(resp.Instances) != 1 {
-			util.Fatalf(CouldntLaunchInstance, "Unable to launch EC2 instance.\n")
+			util.Fatalf(1, "Unable to launch EC2 instance.\n")
 		}
 
 		fmt.Printf("Launching instance %s...\n", aws.StringValue(resp.Instances[0].InstanceId))
@@ -146,7 +131,7 @@ Errors:
 				InstanceIds: instanceIDs,
 			})
 			if err != nil {
-				util.Fatal(AWSAPIError, err)
+				util.Fatal(1, err)
 			}
 
 			if aws.StringValue(resp.Reservations[0].Instances[0].PublicIpAddress) != "" {

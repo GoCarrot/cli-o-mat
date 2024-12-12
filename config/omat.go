@@ -11,13 +11,6 @@ import (
 	"github.com/SixtyAI/cli-o-mat/util"
 )
 
-const (
-	CantFindSSMParam       = 14
-	ErrorLookingUpSSMParam = 15
-	SSMParamEmpty          = 16
-	CantParseSSMParam      = 17
-)
-
 type Omat struct {
 	Credentials *CredentialCache `yaml:"-"`
 
@@ -68,16 +61,16 @@ func (omat *Omat) FetchOrgPrefix() {
 	})
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "ParameterNotFound") {
-			util.Fatalf(CantFindSSMParam, "Couldn't find org prefix parameter: %s\n", roleParamName)
+			util.Fatalf(1, "Couldn't find org prefix parameter: %s\n", roleParamName)
 		}
 
-		util.Fatalf(ErrorLookingUpSSMParam,
+		util.Fatalf(1,
 			"Error looking up org prefix parameter %s, got: %s\n", roleParamName, err.Error())
 	}
 
 	orgPrefix := aws.StringValue(roleParam.Parameter.Value)
 	if orgPrefix == "" {
-		util.Fatalf(SSMParamEmpty, "Paramater '%s' was empty.\n", roleParamName)
+		util.Fatalf(1, "Paramater '%s' was empty.\n", roleParamName)
 	}
 
 	omat.OrganizationPrefix = orgPrefix
@@ -92,21 +85,21 @@ func (omat *Omat) FetchAccountInfo() {
 	})
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "ParameterNotFound") {
-			util.Fatalf(CantFindSSMParam, "Couldn't find account info parameter: %s\n", infoParamName)
+			util.Fatalf(1, "Couldn't find account info parameter: %s\n", infoParamName)
 		}
 
-		util.Fatalf(ErrorLookingUpSSMParam,
+		util.Fatalf(1,
 			"Error looking up account info parameter %s, got: %s\n", infoParamName, err.Error())
 	}
 
 	accountInfo := aws.StringValue(infoParam.Parameter.Value)
 	if accountInfo == "" {
-		util.Fatalf(SSMParamEmpty, "Paramater '%s' was empty.\n", infoParamName)
+		util.Fatalf(1, "Paramater '%s' was empty.\n", infoParamName)
 	}
 
 	var data accountInfoConfig
 	if err = json.Unmarshal([]byte(accountInfo), &data); err != nil {
-		util.Fatalf(CantParseSSMParam, "Couldn't parse account info parameter: %s\nGot: %s\n", infoParamName, accountInfo)
+		util.Fatalf(1, "Couldn't parse account info parameter: %s\nGot: %s\n", infoParamName, accountInfo)
 	}
 
 	omat.ParamPrefix = data.Prefix

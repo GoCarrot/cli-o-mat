@@ -86,7 +86,7 @@ var launchTemplatesCmd = &cobra.Command{
 		ec2Client := ec2.New(details.Session, details.Config)
 		templates, err := awsutil.FetchLaunchTemplates(ec2Client, nil)
 		if err != nil {
-			util.Fatal(AWSAPIError, err)
+			util.Fatal(1, err)
 		}
 
 		showLaunchTemplates(templates)

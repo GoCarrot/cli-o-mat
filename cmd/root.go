@@ -8,10 +8,6 @@ import (
 	"github.com/SixtyAI/cli-o-mat/config"
 )
 
-const (
-	AWSAPIError = 13
-)
-
 // nolint: gochecknoglobals
 var rootCmd = &cobra.Command{
 	Use:   "cli-o-mat",

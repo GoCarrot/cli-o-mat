@@ -84,7 +84,7 @@ var imagesCmd = &cobra.Command{
 			Owners: []*string{aws.String("self")},
 		})
 		if err != nil {
-			util.Fatal(AWSAPIError, err)
+			util.Fatal(1, err)
 		}
 
 		showImages(imagesShortHashes, imageList.Images)

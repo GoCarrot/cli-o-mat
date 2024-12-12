@@ -114,7 +114,7 @@ var hostsCmd = &cobra.Command{
 				NextToken: nextToken,
 			})
 			if err != nil {
-				util.Fatal(AWSAPIError, err)
+				util.Fatal(1, err)
 			}
 
 			for _, res := range hostResp.Reservations {
