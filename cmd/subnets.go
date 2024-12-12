@@ -94,19 +94,21 @@ func showSubnets(subnets []*ec2.Subnet) {
 
 // nolint: gochecknoglobals
 var subnetsCmd = &cobra.Command{
-	Use:   "subnets",
+	Use:   "subnets account",
 	Short: "Show details about the available subnets.",
 	Long:  ``,
-	Run: func(_ *cobra.Command, _ []string) {
-		omat := loadOmatConfig()
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		accountName := args[0]
+		omat := loadOmatConfig(accountName)
 
-		details := awsutil.FindAndAssumeAdminRole(omat.DeployAccountSlug, omat)
+		details := awsutil.FindAndAssumeAdminRole(omat)
 
 		ec2Client := ec2.New(details.Session, details.Config)
 
 		subnets, err := awsutil.FetchSubnets(ec2Client)
 		if err != nil {
-			util.Fatal(AWSAPIError, err)
+			util.Fatal(1, err)
 		}
 
 		showSubnets(subnets)

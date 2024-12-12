@@ -95,13 +95,15 @@ func showHosts(hosts []*ec2.Instance) {
 
 // nolint: gochecknoglobals
 var hostsCmd = &cobra.Command{
-	Use:   "hosts",
+	Use:   "hosts account",
 	Short: "List EC2 instances.",
 	Long:  ``,
-	Run: func(_ *cobra.Command, _ []string) {
-		omat := loadOmatConfig()
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		accountName := args[0]
+		omat := loadOmatConfig(accountName)
 
-		details := awsutil.FindAndAssumeAdminRole(omat.DeployAccountSlug, omat)
+		details := awsutil.FindAndAssumeAdminRole(omat)
 
 		ec2Client := ec2.New(details.Session, details.Config)
 		nextToken := aws.String("")
@@ -112,7 +114,7 @@ var hostsCmd = &cobra.Command{
 				NextToken: nextToken,
 			})
 			if err != nil {
-				util.Fatal(AWSAPIError, err)
+				util.Fatal(1, err)
 			}
 
 			for _, res := range hostResp.Reservations {

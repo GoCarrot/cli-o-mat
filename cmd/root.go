@@ -6,11 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/SixtyAI/cli-o-mat/config"
-	"github.com/SixtyAI/cli-o-mat/util"
-)
-
-const (
-	AWSAPIError = 13
 )
 
 // nolint: gochecknoglobals
@@ -31,50 +26,21 @@ func Execute() {
 // nolint: gochecknoinits
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&region, "region", "", "", "Which AWS region to operate in")
-	rootCmd.PersistentFlags().StringVarP(&environment, "env", "", "", "Which logical environment to operate in")
-	rootCmd.PersistentFlags().StringVarP(&deployService, "deploy-service", "", "", "The name of the deploy_o_mat service")
-	rootCmd.PersistentFlags().StringVarP(&buildAccountSlug, "build-slug", "", "", "The build-account slug (e.g. ci-cd)")
-	rootCmd.PersistentFlags().StringVarP(&deployAccountSlug, "deploy-slug", "", "",
-		"The deploy-account slug (e.g. workload)")
 }
 
 // nolint: gochecknoglobals
 var (
-	region            string
-	environment       string
-	deployService     string
-	buildAccountSlug  string
-	deployAccountSlug string
+	region string
 )
 
-func loadOmatConfig() *config.Omat {
-	omat := config.NewOmat()
+func loadOmatConfig(accountName string) *config.Omat {
+	omat := config.NewOmat(accountName)
 
-	if err := omat.LoadConfig(); err != nil {
-		util.Fatalf(1, "Failed to load omat config.\n")
-	}
+	omat.LoadConfig()
 
 	if region != "" {
 		omat.Region = region
 	}
-
-	if environment != "" {
-		omat.Environment = environment
-	}
-
-	if deployService != "" {
-		omat.DeployService = deployService
-	}
-
-	if buildAccountSlug != "" {
-		omat.BuildAccountSlug = buildAccountSlug
-	}
-
-	if deployAccountSlug != "" {
-		omat.DeployAccountSlug = deployAccountSlug
-	}
-
-	omat.InitCredentials()
 
 	return omat
 }

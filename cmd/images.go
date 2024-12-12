@@ -68,21 +68,23 @@ func showImages(shortHashes bool, images []*ec2.Image) {
 
 // nolint: gochecknoglobals
 var imagesCmd = &cobra.Command{
-	Use:   "images",
+	Use:   "images account",
 	Short: "List AMIs.",
 	Long:  ``,
-	Run: func(_ *cobra.Command, _ []string) {
-		omat := loadOmatConfig()
+	Args:  cobra.ExactArgs(1),
+	Run: func(_ *cobra.Command, args []string) {
+		accountName := args[0]
+		omat := loadOmatConfig(accountName)
 
-		details := awsutil.FindAndAssumeAdminRole(omat.BuildAccountSlug, omat)
+		details := awsutil.FindAndAssumeAdminRole(omat)
 
 		ec2Client := ec2.New(details.Session, details.Config)
 
 		imageList, err := ec2Client.DescribeImages(&ec2.DescribeImagesInput{
-			Owners: []*string{aws.String("self")},
+			ExecutableUsers: []*string{aws.String("self")},
 		})
 		if err != nil {
-			util.Fatal(AWSAPIError, err)
+			util.Fatal(1, err)
 		}
 
 		showImages(imagesShortHashes, imageList.Images)

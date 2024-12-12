@@ -36,17 +36,14 @@ make dist # Like `make build`, but build a distributable (fat) binary
 
 ## Usage
 
-You'll need to set up a `.omat.yml`, preferrably in your home directory.  The tool will look for it
-recursively from whatever directory the tool is executed in, up to your home directory.
-
 ```bash
 omat manual # Show the maual, including what configuration needs to be set up.
 
 omat # List available commands.
 
-omat launch <template> <ssh key> # Launch a new instance from a template.
+omat launch <account> <template> <ssh key> # Launch a new instance from a template.
 
-omat hosts # See all running hosts.
+omat hosts <account> # See all running hosts.
 
 omat help <subcommand> # See help for a specific sub-command.
 ```
