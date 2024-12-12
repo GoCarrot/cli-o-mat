@@ -44,9 +44,9 @@ omat manual # Show the maual, including what configuration needs to be set up.
 
 omat # List available commands.
 
-omat launch <template> <ssh key> # Launch a new instance from a template.
+omat launch <account> <template> <ssh key> # Launch a new instance from a template.
 
-omat hosts # See all running hosts.
+omat hosts <account> # See all running hosts.
 
 omat help <subcommand> # See help for a specific sub-command.
 ```
