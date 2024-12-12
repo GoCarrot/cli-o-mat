@@ -117,8 +117,9 @@ func buildImageMapping(ec2Client *ec2.EC2) map[string]string {
 	images, err := ec2Client.DescribeImages(&ec2.DescribeImagesInput{
 		// ImageIDs:          aws.StringSlice(imageIDs),
 		IncludeDeprecated: aws.Bool(true),
-		Owners:            []*string{aws.String("self")},
+		ExecutableUsers:   []*string{aws.String("self")},
 	})
+
 	if err != nil {
 		util.Fatal(1, err)
 	}
@@ -152,13 +153,10 @@ var launchTemplateCmd = &cobra.Command{
 
 		omat := loadOmatConfig(accountName)
 
-		deployAcctDetails := awsutil.FindAndAssumeAdminRole(omat)
-		deployAcctEC2Client := ec2.New(deployAcctDetails.Session, deployAcctDetails.Config)
+		acctDetails := awsutil.FindAndAssumeAdminRole(omat)
+		ec2Client := ec2.New(acctDetails.Session, acctDetails.Config)
 
-		buildAcctDetails := awsutil.FindAndAssumeAdminRole(omat)
-		buildAcctEC2Client := ec2.New(buildAcctDetails.Session, buildAcctDetails.Config)
-
-		versions, err := awsutil.FetchLaunchTemplateVersions(deployAcctEC2Client, templateName, nil)
+		versions, err := awsutil.FetchLaunchTemplateVersions(ec2Client, templateName, nil)
 		if err != nil {
 			util.Fatal(1, err)
 		}
@@ -167,8 +165,8 @@ var launchTemplateCmd = &cobra.Command{
 			util.Fatalf(1, "No launch template versions found.\n")
 		}
 
-		groupMap := buildSecurityGroupMapping(deployAcctEC2Client, versions)
-		imageMap := buildImageMapping(buildAcctEC2Client)
+		groupMap := buildSecurityGroupMapping(ec2Client, versions)
+		imageMap := buildImageMapping(ec2Client)
 
 		showLaunchTemplateVersions(templateShortHashes, versions, groupMap, imageMap)
 	},

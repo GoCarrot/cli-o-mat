@@ -81,7 +81,7 @@ var imagesCmd = &cobra.Command{
 		ec2Client := ec2.New(details.Session, details.Config)
 
 		imageList, err := ec2Client.DescribeImages(&ec2.DescribeImagesInput{
-			Owners: []*string{aws.String("self")},
+			ExecutableUsers: []*string{aws.String("self")},
 		})
 		if err != nil {
 			util.Fatal(1, err)
