@@ -17,6 +17,40 @@ const (
 	LaunchWaitTimeout = 30
 )
 
+// resolveLaunchTemplate returns the single launch template whose name has the
+// given prefix. It prints the available templates and exits if zero or more than
+// one match, so callers can rely on getting exactly one template back.
+func resolveLaunchTemplate(ec2Client *ec2.EC2, namePrefix string) *ec2.LaunchTemplate {
+	templates, err := awsutil.FetchLaunchTemplates(ec2Client, nil)
+	if err != nil {
+		util.Fatal(1, err)
+	}
+
+	candidates := make([]*ec2.LaunchTemplate, 0)
+	for _, template := range templates {
+		if strings.HasPrefix(aws.StringValue(template.LaunchTemplateName), namePrefix) {
+			candidates = append(candidates, template)
+		}
+	}
+
+	switch {
+	case len(candidates) == 0:
+		fmt.Printf("Found the following launch templates, none of which match specified prefix:\n")
+		for _, template := range templates {
+			fmt.Printf("\t%s\n", aws.StringValue(template.LaunchTemplateName))
+		}
+		util.Fatalf(1, "No matching launch templates found.\n")
+	case len(candidates) > 1:
+		fmt.Printf("Found the following launch templates matching specified prefix:\n")
+		for _, candidate := range candidates {
+			fmt.Printf("\t%s\n", aws.StringValue(candidate.LaunchTemplateName))
+		}
+		util.Fatalf(1, "Multiple launch templates found.\n")
+	}
+
+	return candidates[0]
+}
+
 // nolint: gochecknoglobals,gomnd
 var launchCmd = &cobra.Command{
 	Use:   "launch account template-name keypair-name [subnet-id]",
@@ -51,32 +85,7 @@ will be used.`,
 			instanceType = aws.String(launchType)
 		}
 
-		templates, err := awsutil.FetchLaunchTemplates(ec2Client, nil)
-		if err != nil {
-			util.Fatal(1, err)
-		}
-		candidates := make([]string, 0)
-		for _, template := range templates {
-			templateName := aws.StringValue(template.LaunchTemplateName)
-			if strings.HasPrefix(templateName, namePrefix) {
-				candidates = append(candidates, templateName)
-			}
-		}
-
-		if len(candidates) == 0 {
-			fmt.Printf("Found the following launch templates, none of which match specified prefix:\n")
-			for _, template := range templates {
-				fmt.Printf("\t%s\n", aws.StringValue(template.LaunchTemplateName))
-			}
-			util.Fatalf(1, "No matching launch templates found.\n")
-		} else if len(candidates) > 1 {
-			fmt.Printf("Found the following launch templates matching specified prefix:\n")
-			for _, candidate := range candidates {
-				fmt.Printf("\t%s\n", candidate)
-			}
-			util.Fatalf(1, "Multiple launch templates found.\n")
-		}
-		name := candidates[0]
+		name := aws.StringValue(resolveLaunchTemplate(ec2Client, namePrefix).LaunchTemplateName)
 		fmt.Printf("Using launch template %s...\n", name)
 
 		input := ec2.RunInstancesInput{
