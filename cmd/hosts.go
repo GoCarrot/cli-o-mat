@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"slices"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -95,22 +97,47 @@ func showHosts(hosts []*ec2.Instance) {
 
 // nolint: gochecknoglobals
 var hostsCmd = &cobra.Command{
-	Use:   "hosts account",
-	Short: "List EC2 instances.",
+	Use:   "hosts account [template-name]",
+	Short: "List EC2 instances, optionally filtered to a launch template.",
 	Long:  ``,
-	Args:  cobra.ExactArgs(1),
+	Args:  cobra.RangeArgs(1, 2), // nolint: mnd
 	Run: func(_ *cobra.Command, args []string) {
 		accountName := args[0]
+
+		if hostsState != "" && !slices.Contains(ec2.InstanceStateName_Values(), hostsState) {
+			util.Fatalf(1, "Invalid --state %q, must be one of: %s\n",
+				hostsState, strings.Join(ec2.InstanceStateName_Values(), ", "))
+		}
+
 		omat := loadOmatConfig(accountName)
 
 		details := awsutil.FindAndAssumeAdminRole(omat)
 
 		ec2Client := ec2.New(details.Session, details.Config)
+
+		var filters []*ec2.Filter
+
+		if len(args) == 2 { // nolint: mnd
+			template := resolveLaunchTemplate(ec2Client, args[1])
+			filters = append(filters, &ec2.Filter{
+				Name:   aws.String("tag:" + config.LTIDTag),
+				Values: []*string{template.LaunchTemplateId},
+			})
+		}
+
+		if hostsState != "" {
+			filters = append(filters, &ec2.Filter{
+				Name:   aws.String("instance-state-name"),
+				Values: []*string{aws.String(hostsState)},
+			})
+		}
+
 		nextToken := aws.String("")
 		hosts := []*ec2.Instance{}
 
 		for {
 			hostResp, err := ec2Client.DescribeInstances(&ec2.DescribeInstancesInput{
+				Filters:   filters,
 				NextToken: nextToken,
 			})
 			if err != nil {
@@ -132,7 +159,11 @@ var hostsCmd = &cobra.Command{
 	},
 }
 
+// nolint: gochecknoglobals
+var hostsState string
+
 // nolint: gochecknoinits
 func init() {
 	rootCmd.AddCommand(hostsCmd)
+	hostsCmd.Flags().StringVarP(&hostsState, "state", "", "", "Filter by instance state (pending, running, shutting-down, terminated, stopping, stopped)")
 }
