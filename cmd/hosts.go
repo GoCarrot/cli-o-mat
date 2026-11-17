@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"slices"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -101,6 +103,12 @@ var hostsCmd = &cobra.Command{
 	Args:  cobra.RangeArgs(1, 2), // nolint: mnd
 	Run: func(_ *cobra.Command, args []string) {
 		accountName := args[0]
+
+		if hostsState != "" && !slices.Contains(ec2.InstanceStateName_Values(), hostsState) {
+			util.Fatalf(1, "Invalid --state %q, must be one of: %s\n",
+				hostsState, strings.Join(ec2.InstanceStateName_Values(), ", "))
+		}
+
 		omat := loadOmatConfig(accountName)
 
 		details := awsutil.FindAndAssumeAdminRole(omat)
@@ -157,5 +165,5 @@ var hostsState string
 // nolint: gochecknoinits
 func init() {
 	rootCmd.AddCommand(hostsCmd)
-	hostsCmd.Flags().StringVarP(&hostsState, "state", "", "", "Filter by instance state (e.g. running, stopped)")
+	hostsCmd.Flags().StringVarP(&hostsState, "state", "", "", "Filter by instance state (pending, running, shutting-down, terminated, stopping, stopped)")
 }
