@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+* Teach `hosts` subcommand to accept an optional launch template prefix, matched the way `launch` does
+* Teach `hosts` subcommand to accept `--state`
+
 ## 0.0.4
 
 * Update Go, and various dependencies
